@@ -50,10 +50,10 @@ class QrDetectNode(Node):
     def listener_callback(self, frame_msg):
         # Get frames and display them
         frame = self.bridge.imgmsg_to_cv2(frame_msg, "bgr8")
-        gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-        thresh = cv2.adaptiveThreshold(gray, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 51, 30)
-        # _, thresh = cv2.threshold(gray, 150, 255, cv2.THRESH_BINARY)
-        frame = cv2.cvtColor(thresh, cv2.COLOR_GRAY2BGR)
+        # gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+        # thresh = cv2.adaptiveThreshold(gray, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 51, 30)
+        # # _, thresh = cv2.threshold(gray, 150, 255, cv2.THRESH_BINARY)
+        # frame = cv2.cvtColor(thresh, cv2.COLOR_GRAY2BGR)
 
         # data, bbox, _ = self.qr_detector.detectAndDecode(frame)
         # print(f"data:\n{data}\nbbox data type:\n{type(bbox)}\nBounding box: {bbox}")
