@@ -24,17 +24,17 @@ class QrDetectNode(Node):
     def __init__(self):
         super().__init__('qr_detect')
         self.declare_parameter('use_webcam', False)
-        self.declare_parameter('camera_name', "")
+        self.declare_parameter('camera_id', 0)
         
         use_webcam = self.get_parameter('use_webcam').get_parameter_value().bool_value
         if not use_webcam:
-            self.camera_name = self.get_parameter('camera_name').get_parameter_value().string_value
+            self.camera_id = self.get_parameter('camera_id').get_parameter_value().integer_value
         else:
-            self.camera_name = 0
+            self.camera_id = 0
 
         self.camera_subscription = self.create_subscription(
             Image,
-            f'/cameras/raw/camera_{self.camera_name}',
+            f'/cameras/raw/camera_{self.camera_id}',
             self.listener_callback,
             1)
 
@@ -43,8 +43,8 @@ class QrDetectNode(Node):
         self.bridge = CvBridge()
         self.qr_detector = cv2.QRCodeDetector()
 
-        self.qr_frame_publisher = self.create_publisher(Image, f'/cameras/qr/camera_{self.camera_name}', 1)
-        self.qr_string_publisher = self.create_publisher(String, f'/qr/string/camera_{self.camera_name}', 1)
+        self.qr_frame_publisher = self.create_publisher(Image, f'/cameras/qr/camera_{self.camera_id}', 1)
+        self.qr_string_publisher = self.create_publisher(String, f'/qr/string/camera_{self.camera_id}', 1)
 
 
     def listener_callback(self, frame_msg):
