@@ -5,7 +5,7 @@ import rclpy
 from rclpy.node import Node
 
 from std_msgs.msg import String
-from sensor_msgs.msg import Image
+from sensor_msgs.msg import Image, CompressedImage
 from message_filters import Subscriber, TimeSynchronizer
 
 import numpy as np
@@ -18,6 +18,8 @@ from pyzbar import pyzbar
 import json
 
 from cv_bridge import CvBridge
+
+from rclpy.qos import QoSProfile, ReliabilityPolicy
 
 class QrDetectNode(Node):
 
@@ -32,24 +34,29 @@ class QrDetectNode(Node):
         else:
             self.camera_id = 0
 
+        qos = QoSProfile(
+            depth=1,
+            reliability=ReliabilityPolicy.BEST_EFFORT
+        )
+
         self.camera_subscription = self.create_subscription(
-            Image,
+            CompressedImage,
             f'/cameras/raw/camera_{self.camera_id}',
             self.listener_callback,
-            1)
+            qos)
 
         self.collected_codes = []
 
         self.bridge = CvBridge()
         self.qr_detector = cv2.QRCodeDetector()
 
-        self.qr_frame_publisher = self.create_publisher(Image, f'/cameras/qr/camera_{self.camera_id}', 1)
+        self.qr_frame_publisher = self.create_publisher(CompressedImage, f'/cameras/qr/camera_{self.camera_id}', qos)
         self.qr_string_publisher = self.create_publisher(String, f'/qr/string/camera_{self.camera_id}', 1)
 
 
     def listener_callback(self, frame_msg):
         # Get frames and display them
-        frame = self.bridge.imgmsg_to_cv2(frame_msg, "bgr8")
+        frame = self.bridge.compressed_imgmsg_to_cv2(frame_msg, desired_encoding='bgr8')
         # gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
         # thresh = cv2.adaptiveThreshold(gray, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 51, 30)
         # # _, thresh = cv2.threshold(gray, 150, 255, cv2.THRESH_BINARY)
@@ -80,7 +87,8 @@ class QrDetectNode(Node):
             text = qr_code.data.decode("utf-8")
             collected_codes_text.append(text)
 
-        new_frame_msg = self.bridge.cv2_to_imgmsg(frame, "bgr8")
+        new_frame_msg = self.bridge.cv2_to_compressed_imgmsg(frame, dst_format='jpg')
+        new_frame_msg.header.stamp = self.get_clock().now().to_msg()
         self.qr_frame_publisher.publish(new_frame_msg)
         
         str_msg = String()
