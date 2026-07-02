@@ -77,22 +77,21 @@ class QrDetectNode(Node):
         #     cv2.line(frame, point_3, point_0, color, thinkness)
 
         qr_codes = pyzbar.decode(frame)
-        
-        collected_codes_text = []
 
         for qr_code in qr_codes:
             (x, y, w, h) = qr_code.rect
             cv2.rectangle(frame, (x, y), (x+w, y+h), (0, 255, 0), 2)
 
             text = qr_code.data.decode("utf-8")
-            collected_codes_text.append(text)
+            if text not in self.collected_codes:
+                self.collected_codes.append(text)
 
         new_frame_msg = self.bridge.cv2_to_compressed_imgmsg(frame, dst_format='jpg')
         new_frame_msg.header.stamp = self.get_clock().now().to_msg()
         self.qr_frame_publisher.publish(new_frame_msg)
         
         str_msg = String()
-        str_msg.data = collected_codes_text.__str__()
+        str_msg.data = self.collected_codes.__str__()
         self.qr_string_publisher.publish(str_msg)
 
 def main(args=None):
